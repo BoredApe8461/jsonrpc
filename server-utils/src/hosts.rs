@@ -80,6 +80,11 @@ impl Host {
 		Host::new(host, port)
 	}
 
+	/// Checks if given string matches the pattern.
+	pub fn matches<T: AsRef<str>>(&self, other: T) -> bool {
+		self.matcher.matches(other)
+	}
+
 	fn pre_process(host: &str) -> String {
 		// Remove possible protocol definition
 		let mut it = host.split("://");

@@ -74,6 +74,11 @@ impl Origin {
 		Origin::with_host(protocol, hostname)
 	}
 
+	/// Checks if given string matches the pattern.
+	pub fn matches<T: AsRef<str>>(&self, other: T) -> bool {
+		self.matcher.matches(other)
+	}
+
 	fn to_string(protocol: &OriginProtocol, host: &Host) -> String {
 		format!(
 			"{}://{}",
