@@ -24,6 +24,10 @@ build_rpc_trait! {
 		#[rpc(name = "mul")]
 		fn mul(&self, u64, jsonrpc_macros::Trailing<u64>) -> Result<u64>;
 
+		/// Multiplies two numbers. Second number is optional.
+		#[rpc(name = "mul")]
+		fn mul(&self, u64, jsonrpc_macros::Trailing<u64>) -> Result<u64, Error>;
+
 		/// Performs asynchronous operation
 		#[rpc(name = "callAsync")]
 		fn call(&self, u64) -> FutureResult<String, Error>;

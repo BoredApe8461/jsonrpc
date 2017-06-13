@@ -511,7 +511,7 @@ impl<M, B, OUT, T> WrapSubscribe<B, M> for fn(&B, M, pubsub::Subscriber<OUT>, Tr
 }
 
 impl<B, M, OUT, T> WrapSubscribe<B, M> for fn(&B, M, pubsub::Subscriber<OUT>, Trailing<T>)
-	where B: Send + Sync + 'static, OUT: Serialize, M: PubSubMetadata, T: Default + Deserialize,
+	where B: Send + Sync + 'static, OUT: Serialize, M: PubSubMetadata, T: Deserialize,
 {
 	fn wrap_rpc(&self, base: &B, params: Params, meta: M, subscriber: Subscriber) {
 		let id = parse_trailing_param(params);
@@ -638,7 +638,7 @@ macro_rules! wrap_with_trailing {
 			META: PubSubMetadata,
 			OUT: Serialize,
 			$($x: Deserialize,)+
-			TRAILING: Default + Deserialize,
+			TRAILING: Deserialize,
 		> WrapSubscribe<BASE, META> for fn(&BASE, META, pubsub::Subscriber<OUT>, $($x,)+ Trailing<TRAILING>) {
 			fn wrap_rpc(&self, base: &BASE, params: Params, meta: META, subscriber: Subscriber) {
 				let len = match params_len(&params) {
@@ -651,9 +651,9 @@ macro_rules! wrap_with_trailing {
 
 				let params = match len - $num {
 					0 => params.parse::<($($x,)+)>()
-						.map(|($($x,)+)| ($($x,)+ TRAILING::default())),
+						.map(|($($x,)+)| ($($x,)+ None)),
 					1 => params.parse::<($($x,)+ TRAILING)>()
-						.map(|($($x,)+ id)| ($($x,)+ id)),
+						.map(|($($x,)+ id)| ($($x,)+ Some(id))),
 					_ => {
 						let _ = subscriber.reject(invalid_params(&format!("Expected {} or {} parameters.", $num, $num + 1), format!("Got: {}", len)));
 						return;
