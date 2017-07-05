@@ -90,6 +90,11 @@ fn serve(port: u16) -> (Server, Arc<AtomicUsize>) {
 			Ok(core::Value::String("complete".into()))
 		})
 	});
+	io.add_async_method("record_pending", move |_params: core::Params| {
+		counter.fetch_add(1, Ordering::SeqCst);
+		let (send, recv) = oneshot::channel();
+		::std::thread::spawn(move || {
+			::std::thread::sleep(Duration::from_millis(500));
 
 	let server = ServerBuilder::new(io)
 		.allowed_origins(DomainsValidation::AllowOnly(vec!["https://parity.io".into()]))
