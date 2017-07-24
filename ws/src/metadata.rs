@@ -79,37 +79,40 @@ impl Sender {
 		}
 	}
 
-	fn check_active(&self) -> ws::Result<()> {
+	fn check_active(&self) -> Result<(), Error> {
 		if self.active.load(atomic::Ordering::SeqCst) {
 			Ok(())
 		} else {
-			Err(ws::Error::new(ws::ErrorKind::Internal, "Attempting to send a message to closed connection."))
+			Err(Error::ConnectionClosed)
 		}
 	}
 
 	/// Sends a message over the connection.
 	/// Will return error if the connection is not active any more.
-	pub fn send<M>(&self, msg: M) -> ws::Result<()> where
-		M: Into<ws::Message>
+	pub fn send<M>(&self, msg: M) -> Result<(), Error>
+		where M: Into<ws::Message>
 	{
 		self.check_active()?;
-		self.out.send(msg)
+		self.out.send(msg)?;
+		Ok(())
 	}
 
 	/// Sends a message over the endpoints of all connections.
 	/// Will return error if the connection is not active any more.
-	pub fn broadcast<M>(&self, msg: M) -> ws::Result<()> where
+	pub fn broadcast<M>(&self, msg: M) -> Result<(), Error> where
 		M: Into<ws::Message>
 	{
 		self.check_active()?;
-		self.out.broadcast(msg)
+		self.out.broadcast(msg)?;
+		Ok(())
 	}
 
 	/// Sends a close code to the other endpoint.
 	/// Will return error if the connection is not active any more.
-	pub fn close(&self, code: ws::CloseCode) -> ws::Result<()> {
+	pub fn close(&self, code: ws::CloseCode) -> Result<(), Error> {
 		self.check_active()?;
-		self.out.close(code)
+		self.out.close(code)?;
+		Ok(())
 	}
 }
 
