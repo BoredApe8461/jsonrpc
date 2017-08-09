@@ -641,7 +641,7 @@ macro_rules! wrap_with_trailing {
 			TRAILING: DeserializeOwned,
 		> WrapSubscribe<BASE, META> for fn(&BASE, META, pubsub::Subscriber<OUT>, $($x,)+ Trailing<TRAILING>) {
 			fn wrap_rpc(&self, base: &BASE, params: Params, meta: META, subscriber: Subscriber) {
-				let len = match params_len(&params) {
+				let len = match require_len(&params, $num) {
 					Ok(len) => len,
 					Err(e) => {
 						let _ = subscriber.reject(e);
