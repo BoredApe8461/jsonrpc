@@ -90,6 +90,11 @@ fn serve(port: u16) -> (Server, Arc<AtomicUsize>) {
 			Ok(core::Value::String("complete".into()))
 		})
 	});
+	io.add_async_method("record_pending", move |_params: core::Params| {
+		counter.fetch_add(1, Ordering::SeqCst);
+		let (send, recv) = oneshot::channel();
+		::std::thread::spawn(move || {
+			::std::thread::sleep(Duration::from_millis(500));
 
 	let server = ServerBuilder::new(io)
 		.allowed_origins(DomainsValidation::AllowOnly(vec!["https://parity.io".into()]))
@@ -202,10 +207,10 @@ fn drop_session_should_cancel() {
 
 	// when
 	connect("ws://127.0.0.1:30005", |out| {
-    	out.send(r#"{"jsonrpc":"2.0", "method":"record_pending", "params": [], "id": 1}"#).unwrap();
+		out.send(r#"{"jsonrpc":"2.0", "method":"record_pending", "params": [], "id": 1}"#).unwrap();
 
 		let incomplete = incomplete.clone();
-    	move |_| {
+		move |_| {
 			assert_eq!(incomplete.load(Ordering::SeqCst), 0);
 	    	out.send(r#"{"jsonrpc":"2.0", "method":"record_pending", "params": [], "id": 2}"#).unwrap();
 			out.close(CloseCode::Normal)

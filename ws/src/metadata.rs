@@ -63,6 +63,59 @@ impl Sender {
 	}
 }
 
+/// Output of WebSocket connection. Use this to send messages to the other endpoint.
+#[derive(Clone)]
+pub struct Sender {
+	out: ws::Sender,
+	active: Arc<atomic::AtomicBool>,
+}
+
+impl Sender {
+	/// Creates a new `Sender`.
+	pub fn new(out: ws::Sender, active: Arc<atomic::AtomicBool>) -> Self {
+		Sender {
+			out: out,
+			active: active,
+		}
+	}
+
+	fn check_active(&self) -> Result<(), Error> {
+		if self.active.load(atomic::Ordering::SeqCst) {
+			Ok(())
+		} else {
+			Err(Error::ConnectionClosed)
+		}
+	}
+
+	/// Sends a message over the connection.
+	/// Will return error if the connection is not active any more.
+	pub fn send<M>(&self, msg: M) -> Result<(), Error>
+		where M: Into<ws::Message>
+	{
+		self.check_active()?;
+		self.out.send(msg)?;
+		Ok(())
+	}
+
+	/// Sends a message over the endpoints of all connections.
+	/// Will return error if the connection is not active any more.
+	pub fn broadcast<M>(&self, msg: M) -> Result<(), Error> where
+		M: Into<ws::Message>
+	{
+		self.check_active()?;
+		self.out.broadcast(msg)?;
+		Ok(())
+	}
+
+	/// Sends a close code to the other endpoint.
+	/// Will return error if the connection is not active any more.
+	pub fn close(&self, code: ws::CloseCode) -> Result<(), Error> {
+		self.check_active()?;
+		self.out.close(code)?;
+		Ok(())
+	}
+}
+
 /// Request context
 pub struct RequestContext {
 	/// Session id
@@ -102,6 +155,15 @@ impl fmt::Debug for RequestContext {
 pub trait MetaExtractor<M: core::Metadata>: Send + Sync + 'static {
 	/// Extract metadata for given session
 	fn extract(&self, _context: &RequestContext) -> M;
+}
+
+impl<M, F> MetaExtractor<M> for F where
+	M: core::Metadata,
+	F: Fn(&RequestContext) -> M + Send + Sync + 'static,
+{
+	fn extract(&self, context: &RequestContext) -> M {
+		(*self)(context)
+	}
 }
 
 impl<M, F> MetaExtractor<M> for F where

@@ -25,6 +25,12 @@ pub type FutureOutput = future::Either<
 	future::FutureResult<Option<Output>, ()>,
 >;
 
+/// A type representing a result of a single method call.
+pub type FutureOutput = future::Either<
+	BoxFuture<Option<Output>, ()>,
+	future::FutureResult<Option<Output>, ()>,
+>;
+
 /// `IoHandler` json-rpc protocol compatibility
 #[derive(Debug, Clone, Copy)]
 pub enum Compatibility {

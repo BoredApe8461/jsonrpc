@@ -58,6 +58,18 @@ impl From<Notification> for Call {
 	}
 }
 
+impl From<MethodCall> for Call {
+	fn from(mc: MethodCall) -> Self {
+		Call::MethodCall(mc)
+	}
+}
+
+impl From<Notification> for Call {
+	fn from(n: Notification) -> Self {
+		Call::Notification(n)
+	}
+}
+
 impl Serialize for Call {
 	fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
 	where S: Serializer {
